@@ -1,0 +1,349 @@
+# Final project-adress:
+	- Jobify-App-Url: https://jobify.live/
+
+#vs-code extensions
+	- ES7 React/Redux...Snippets
+		- stop import of react by using the snippet in vscode-settings:
+			- React-Sinippets Settings Import React on Top: False
+	- Auto Rename Tags
+	- Prettier Code formatter
+		- set to default
+	- Emmet Abbreviation
+		- Include Languages
+			- javascript: javascriptreact
+
+# using vite
+	- npm create vite@latest client -- --template react
+
+# recources
+	- images like error-page and landing-page images
+		- https://undraw.co/
+	- favicon-icons
+		- https://favicon.io/
+	- react icons
+		- https://react-icons.github.io/react-icons/
+		- npm install react-icons
+		- search your icons on their page 
+		- import and use it as a component
+
+# server...
+	- new features in node
+		- fetch API
+			- fetch out of the box
+		- global await
+			- await without creating async funcs
+		- watch mode
+			- nearly same as nodemon
+	- package.json: 
+		- to use es6 in write under "main"..
+			- "type": "module",
+		- in script-section write
+			- "setup-project":"npm i && cd client npm i",
+		
+	- import statements must include the file.ext=js!
+# server-details
+	- import express
+	- import morgan
+	- import dotenv
+
+	- app = express()
+	- create controller
+		- funcs that controll the data-flow for every route
+	- create router
+		- import Router from express
+		- router=Router()
+		- router.route('/...', controller-func)
+	- set middleware
+		- app.use(express.json)
+		- app.use(morgan) # only development
+		- app.use(...routers)
+		- app.use('*', (req,res=>{404 error-message})
+		-	app.use(err, req, res, next)...
+		- app.listen(port, ()=>{cl-message})
+	- connect to mongo-DB
+		- create a mongo-collection in atlas account
+			- connect with native mongo-driver node...
+			- user:passwort auth
+			- get conn-url
+			- install npm i mongoose
+			- import in server and take app.listen.. and mongoose.connect(mongo-url)
+				in a try:catch-block
+	- use mongo-schemas
+		- create a model with mongoose.Schema(...field-definitions)
+		- export default mongoose.model('tablename', Schema)
+	- use in controllers
+		- import Schema ...as default call it for exmpl. Job
+		- Job.create(req.body) to create a new data-row
+	- use async-error-handler
+		- you can take every db-query in a try-catch-block
+		- better import 'expresss-async-errors' at the very top of the server-file
+			This will catch all async errors an will route them to the 
+				- app.use(err...) at the and of the middleware!
+
+# Error handler middleware	
+	- The async-error-handler catches all Errors except 404. To be specific, 
+		a middleware is to be implemented, that throws good explaining custom-errors
+	- all what this middlewar does, is to filter the custom-errors and ... if not 
+		a custom-error, returns default error-message
+	- in errors.customErrors.js there 4 errors defined:
+		- NotFoundError
+		- BadRequestError
+		- UnauthorizedError
+		- UnauthenticatedError
+	- these errors are thrown in the controller-funcs, when something related happens, 
+		an they are catched in the custom errorHandlerMiddleware.
+
+# Validation handler middleware
+	- Validation is required as MW in every controller-func. To handle this, there is 
+		a npm-package used: import {body, validationResult} from 'express-validator'
+	- it is used in 
+	- it is used in middleware.validationMiddleware. 
+	- to use this middleware it's export validate[Test, Job, ...] is to be placed in 
+		every route which needs validation. 
+	- In this tutorial it's 
+			- validateJob checks the JSON-Body for Create- and UpdateJob, is placed 
+				directly before the controller-func. The validateJob needs a fullfilled 
+				model to be used 
+			- validateMongoId for Get-, Update- and DeleteJob. Here the url-params are checked 
+				for id! First the id is validated for beeing a correct mongo-id and second if 
+				there is a job for this ID. 
+					- Notice.... the Errors thrown by the ID-validation are simple
+						JS-Errors. They will be discriminated in the validator() using the 
+						Error-Message and the Custom-Errors will be sent!
+			- In case of the UpdateJob these two validators are chained.
+			
+		for both. The Update-func gets the changed fields and all the other fields unchanged.
+
+# User implementation
+	- same as jobs! We need a
+		- UserModel imported as User
+
+		- authRouter
+			- register
+			- login
+		
+		- authController with funcs for the routes
+				- register
+					- here is the functionality to hash the password to be stored and 
+						for the first user-account in the DB the role=admin will be set. 
+						This happens in 
+							- utils.checkRequestBody.modifyRequestBody 
+						in modifying the req.body before the user is beeing created.
+				- login
+					when it comes to the login-controller, the user-email is checked with the 
+					validator and the stored password-hash is compared to the given password in
+							- utils.checkRequestBody.comparePassword()
+					Now the user-information with userId, userName and userRole is wrapped in a 
+					- JWT-Token
+					The JWT-Token is created and veryfied in utilsJWTtoken.js. The JWT-Token 
+					is encrypted with a JWT_SECRET stored in .env. But its already to be read 
+					by a JWT-Debugger! This token is stored as a HttpOnly-cookie and will be 
+					send with each request. 
+					The token is checked from the middleware authUser in
+						- beeing present in request
+						- beeing validated by
+							-  utilsJWTtoken.verifyToken()
+					If its validated, authUser sets the user-info from the JWT with
+						- userId, userRole, userName 
+					into the request. Here it can be used from the next() middleware-stations,
+					specialy from those routes, that needs a logged-in user.
+					To make this functionality work, a cookieParser-middleware, 
+						- app.use(cookieParser) is to be placed before the 
+					 - app.use(express.json)
+		- authValidation for both routes
+			- validateLoginInput
+			- validateRegisterInput
+
+		- The JobModel is updated with a new field:
+			- createdBy({type: mongoose.Types.ObjectId, ref:'User})
+			This binds the job-entry to a user. The jobController.createJob() sets the ID
+			from the req.user.userId in the body.createdBy before the job is created.
+			- this way, getJobs can look only for those jobs created by the logged-in user.
+		- When getting the jobs with GetJobs, only those jobs which belongs to the user 
+			will be fetched.
+			- Job.find({createdBy.toString()=req.user.userId}
+		- If the currentUser-Role is admin the find.query will be empty
+
+# More User-Routes
+	- There are 3 more routes to be implemented, now in a new set of 
+		- userController
+			...
+
+		- userRouter
+			- UpdateUser
+			- GetCurrentUser
+			- GetAppStats
+	- to return the currentUser without password, there is a model-func implemented
+		in UserModel. It works on the instance of the user and uses .this. So it MUST 
+		be a function() not an ()=> func
+			- toJson()
+		It builds an Object from the user-instance and deletes the password-attribute. 
+		This object is beeing returned.
+	- the same technique is used for updating the user. Here all the fields that are
+		not allowed to be updated by the user, are deleted from the req.body. Unfortunally
+		by the time the user is not allowed to change password, or email. This functionality
+		should be implemented later. May be with to more routes.
+		- changePassword
+		- changeEmail
+		Further on there should be a complex of admin routes implemented where 
+		admin-functionality is allowed.
+			- GetAllJobs
+			- GetAllUsers ...without password!
+			- UpdateUserRole
+			- GetAppStats
+
+	- Role-Diskrimination
+		- In authMiddleware there is a authPermissions()-middleware defined, which 
+			checks for admin, but can be used, to discriminate all roles. So far it is 
+			only used in GetAppStats. It uses the spread-operator, so all desired roles
+			can be checked for beeing one of the user-roles.
+
+# Client-Fortsetzung
+	- CORS-Error for requests to other servers, even same server other ports. 
+		This is not allowed for browsers, so they throw an error, when we try to 
+		fetch from our api. To prevent this error there is to be set a sort of 
+		
+		- Proxy-server in vite.conf
+			- export default defineConfig(plugins:..., server:{proxy:...}
+
+	- AXIOS! fetch can be used by default, but the most modern library is axios...
+		so we use axios. Here we define and export by default a
+		customFetch-axios-setup in utils.customFetch.js
+		- const customFetch = axios.create({baseURL: '/api/v1}) 
+		This is what we use when using axios with 
+		- const res = await customFetch.get(url,...)
+
+# Register-page -Actions
+	- To use the api-routes of the backend-server, there are a few steps in different
+		files of client todo.
+		- Define an action-func to be used in the react-router
+			- Actions are defined and exported in utils.actions. so far we have 
+				registerAction and loginAction.
+		- The actions are to be imported in app.jsx and under the Element to be
+			loaded, there is to define e.g. an action: registerAction or action: loginAction
+		- To use the formdata-api, we have to import Form from react router in all pages 
+			with actions bounded. This Form is the element, that replaces <form...
+			- <Form method="post">....</Form> 
+			- The Form-elt and the method="post" must be defined. Thats the trigger, that
+				bundles the action with the Form-page and the router. 
+		- To give the user feedback, we use a hook
+			- useNavigation from react-router
+			- this gives us the boolean isSubmitting, what we use to set the disabled-state 
+				and the text of the submit-btn. 
+
+# toastify
+	- to give feedback, there is a message-system toastify to be imported. 
+		- install the package
+		- import { ToastContainer } and toast.css im main.jsx
+		- set the <ToastContainer position='top-center' /> element under the <App /> 
+			in main.jsx
+		- import { toast }  in action.js and everywhere you want to use these messages.
+		- use them with toast.success(msg).....
+
+# SubmitButton Component
+	- The Submit-Button in Forms is used a lot of times. Therefor a Component for this 
+		Button makes sence. There are some buttons, that have a third className='form-btn'
+		therefore the SubmitButton-Component is parameterized and if the formBtn-parameter
+		is present, the className is set. The use of this component is:
+		- <SubmitButton formBtn /> or simple <SubmitButton />
+	- When writing this, it is to be implemented in the pages:
+		- AddJob, Profile, Register, Login, End EditJob
+
+# Creating a test-user
+	- First a testuser is to be stored in MongoDB...I took Chuckleberry. Then the Explore-
+		Button on Login-Page logs this user in. To do this, there is an api-call 
+		- loginDemoUser() defined, which needs the navigate-function from useNavigate-Hook.
+		- Since it is a hook, it has to be used inside a Component-Function, the Login-Page,				- navigate=useNavigate()
+			but than, the navigate-func can be given to loginDemoUser. 
+		- This func logs the testuser hardcoded in, and redirects with navigate to Desktop
+		- On serverside the authMiddleware first sets the testUser in the user-token, 
+			if thats the user beeing logged in. 
+		- Then a validation-func is implemented in authValidation:
+			- checkForTestUser(req, res, next)...
+		- This validator is beeing set to all edit, create and update-Routes and throws 
+			an error, if the user === testUser.
+			given as an arg to the loginDemoUser-func.
+
+# Git-crash beheben
+	- PC-Absturz bei checkout master... Git irreperabel beschädigt. Lösung
+		- neuen Ordner project01 erstellt.
+		- git Repo in diesen Ordner gecloned
+		- in project01 neuen Ordner project.bkp erstellt
+		- in diesen Ordner den Original-Ordner kopiert mit
+			- cp -a ../project/. project.bkp/
+		- der Punkt am Ende .../. ist wichtig, damit auch hidden-files 
+			übertragen werden!
+		- Löschen des .git-Ordners in project.bkp mit 
+			- rm -rf .git  ...im Ordner project.bkp
+		- Anschließend alle Dateien nach project01 kopieren also in project01
+			- cp -a project.bkp/. .
+		- Falls an einem Branch gearbeitet wurde erfolgt noch ein 
+			- git fetch branch => git merge master branch
+		- Danach git aktualisieren mit git add . => git commit => git push
+
+# Implementing Mock-Data and Stats
+	- first create mockJobs in https://www.mockaroo.com/ 
+		- second create a populate-modul for populating the mockJobs in mongo.db
+		- The test-user and the admin should get those jobs. 
+		- Both, the mockJobs.json and the populate.js live in the utils.folder of the server.
+		- The populate runs with node utils/populate for each user separately to be set 
+			in the populate-modul. There is a short description in that modul.
+	- when it comes to api.implementation, the routers.jobRouter.js and the 
+		controllers.jobController are involved.
+		- The jobController defines the function
+			- showStats()
+		- The jobRouter defines the 
+			- router.route('/stats').get(showStats), to be placed BEFORE the route('/:id')
+	- The jobController.showStats() is an excellent example for the aggregation in 
+		mongo.db. mongo.db-aggregation js.map and js.reduce are playing excellent
+		together to get the desired stats-objects. 
+		- {
+			"stats": {
+				"pending": 26,
+				"interview": 34,
+				"declined": 40
+			},
+			"monthlyApplications": [
+				{
+					"date": "Aug 23",
+					"count": 8
+				},
+				{
+					"date": "Sep 23",
+					"count": 9
+				}, ...snip...
+#
+# Vite-package installiert und in vite.config implementiert
+	- Fehlermeldung beim Versuch req.url auszuwerten in allJobsLoader() =>
+	- npm install --save-dev vite-plugin-node-polyfills	
+	- in vite.config.js 
+		- export default defineConfig({
+				plugins: [
+					nodePolyfills(),
+					react(),
+				]
+				...snip
+			})
+
+# Implementing stats
+#
+# Implementing Graphs
+#
+# Implementing AllJobs with Search-Form
+#
+# Implementing AllJobs Pagination
+#
+# Login Admin
+	- john@mail.com:12secret
+
+# Deploy
+	- First run in the client folder
+		- npm run build 
+	- this creates a dist-folder under client 
+	- copy the contents of dist...not dist itsself! to server-public folder
+	- define a route as last one in server.js, after all the routers...
+		- app.get('*', ...) 
+	- this route sends the public/index.html as response and you will get it under
+		the server-port 5100
+		- http://localhost:5100
+
