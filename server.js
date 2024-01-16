@@ -41,7 +41,7 @@ cloudinary.config({
 })
 
 // Include Public Folder
-app.use(express.static(path.resolve(__dirname, './public')))
+app.use(express.static(path.resolve(__dirname, './client/dist')))
 
 // Cookie-Parser
 app.use(cookieParser())
@@ -61,7 +61,7 @@ app.use('/api/v1/user', authenticateUser, userRouter)
 
 // main-index.html in public after copying client dist
 app.get('*', (req, res) => {
-	res.sendFile(path.resolve(__dirname, './public', 'index.html'))
+	res.sendFile(path.resolve(__dirname, './client/dist', 'index.html'))
 })
 
 // NOT FOUND MW Not Found
