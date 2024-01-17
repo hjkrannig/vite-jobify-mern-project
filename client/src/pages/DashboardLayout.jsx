@@ -1,8 +1,13 @@
-import { Outlet, useLoaderData, useNavigate } from 'react-router-dom'
+import {
+	Outlet,
+	useLoaderData,
+	useNavigate,
+	useNavigation
+} from 'react-router-dom'
 import { useState } from 'react'
 import Wrapper from '../assets/wrappers/Dashboard'
 
-import { SmallSidebar, BigSidebar, Navbar } from '../components'
+import { SmallSidebar, BigSidebar, Navbar, Loading } from '../components'
 import { checkDarkTheme } from '../utils/helpers'
 import { DashboardContext } from '../hooks/context'
 import { logoutApi } from '../api/api-calls'
@@ -14,6 +19,8 @@ import { logoutApi } from '../api/api-calls'
 const DashboardLayout = () => {
 	const { user } = useLoaderData() // actions.dashboardLoader
 	const navigate = useNavigate()
+	const navigation = useNavigation()
+	const isPageLoading = navigation.state === 'loading'
 	const [showSidebar, setShowSidebar] = useState(false)
 	const [isDarkTheme, setIsDarkTheme] = useState(checkDarkTheme())
 
@@ -50,7 +57,7 @@ const DashboardLayout = () => {
 						<Navbar />
 						<div className='dashboard-page'>
 							{/* context provides user to all subpages */}
-							<Outlet context={{ user }} />
+							{isPageLoading ? <Loading /> : <Outlet context={{ user }} />}
 						</div>
 					</div>
 				</main>
