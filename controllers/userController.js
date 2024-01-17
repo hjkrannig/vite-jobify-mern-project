@@ -1,10 +1,9 @@
 import { StatusCodes } from 'http-status-codes'
 import cloudinary from 'cloudinary'
-import { promises as fs } from 'fs'
 
 import User from '../models/UserModel.js'
 import Job from '../models/JobModel.js'
-
+import { formatImage } from '../middleware/multerMiddleware.js'
 export const getCurrentUser = async (req, res) => {
 	const msg = 'current user'
 	const _id = req.user.userId
@@ -36,10 +35,10 @@ export const updateUser = async (req, res) => {
 	// delete user_obj.email // only when validation-check is implemented
 
 	// Avatar-File-Upload to cloudinary
-	console.log(req.file)
+	// console.log(req.file)
 	if (req.file) {
-		const response = await cloudinary.v2.uploader.upload(req.file.path)
-		await fs.unlink(req.file.path)
+		const file = formatImage(req.file)
+		const response = await cloudinary.v2.uploader.upload(file)
 		user_obj.avatar = response.secure_url
 		user_obj.avatarPublicId = response.public_id
 	}
