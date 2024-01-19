@@ -5,6 +5,7 @@ import { AllJobsContext } from '../hooks/context'
 
 const AllJobs = () => {
 	const data = useLoaderData() // coming from loader
+
 	return (
 		<AllJobsContext.Provider value={data}>
 			<SearchContainer />

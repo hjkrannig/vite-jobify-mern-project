@@ -21,7 +21,7 @@ export const allJobsLoader = async ({ request }) => {
 	])
 	try {
 		const { data } = await customFetch.get('/job', { params })
-		return data
+		return { ...data, search_params: params }
 	} catch (error) {
 		toast.error(error?.response?.data?.msg)
 		console.log(error)

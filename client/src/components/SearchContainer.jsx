@@ -1,34 +1,36 @@
 import { Form, useSubmit, Link } from 'react-router-dom'
 
 import Wrapper from '../assets/wrappers/DashboardFormPage'
-import { FormRow, FormRowSelect, SubmitButton } from '.'
+import { FormRow, FormRowSelect } from '.'
 import { JOB_TYPE, JOB_STATUS, JOB_SORT_BY } from '../../../utils/constants'
 import { useAllJobsContext } from '../hooks/context'
 import routes from '../utils/routes'
 
-const SearchContainer = () => {
-	/**
-	 * evtFunc is the main-func to be invoked when
-	 * the event is triggered. The func to be called
-	 * when the user types is defined in return. So
-	 * after a user-type the timeout starts new and
-	 * after 2 secs evtFunc is invoked or...the
-	 * next type in between to seconds sets the timer
-	 * on start again
-	 *
-	 */
-	const debounce = (evtFunc) => {
-		let timeout
-		return (e) => {
-			clearTimeout(timeout)
-			const form = e.currentTarget.form
-			timeout = setTimeout(() => {
-				evtFunc(form)
-			}, 2000)
-		}
+/**
+ * evtFunc is the main-func to be invoked when
+ * the event is triggered. The func to be called
+ * when the user types is defined in return. So
+ * after a user-type the timeout starts new and
+ * after 2 secs evtFunc is invoked or...the
+ * next type in between to seconds sets the timer
+ * on start again
+ *
+ */
+const debounce = (evtFunc) => {
+	let timeout
+	return (e) => {
+		clearTimeout(timeout)
+		const form = e.currentTarget.form
+		timeout = setTimeout(() => {
+			evtFunc(form)
+		}, 2000)
 	}
+}
 
-	const { search, jobStatus, jobType, sort } = useAllJobsContext()
+const SearchContainer = () => {
+	const data = useAllJobsContext()
+	const { search, jobStatus, jobType, sort } = data.search_params
+
 	const submit = useSubmit()
 	return (
 		<Wrapper>

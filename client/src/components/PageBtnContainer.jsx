@@ -27,7 +27,7 @@ const PageBtnContainer = () => {
 	const renderPageButtons = () => {
 		const pageButtons = []
 		const STEP = Math.round(pages/5)
-		console.log(STEP)
+		// console.log(STEP)
 
 		// first page
 		pageButtons.push(addPageBtn({ pageIndex: 1, activeClass: page === 1 }))
